@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>EvictStaleCachedResponsesJobFactory.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">diningcachingproxy</a> &gt; <a href="index.source.html" class="el_package">edu.ucsb.cs156.diningcachingproxy.services</a> &gt; <span class="el_source">EvictStaleCachedResponsesJobFactory.java</span></div><h1>EvictStaleCachedResponsesJobFactory.java</h1><pre class="source lang-java linenums">package edu.ucsb.cs156.diningcachingproxy.services;
+
+import edu.ucsb.cs156.diningcachingproxy.collections.CachedResponseRepository;
+import edu.ucsb.cs156.diningcachingproxy.jobs.EvictStaleCachedResponsesJob;
+import edu.ucsb.cs156.jobs.entities.Job;
+import edu.ucsb.cs156.jobs.services.JobService;
+import java.time.Clock;
+import java.time.Duration;
+import java.time.Instant;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Service;
+
+/**
+ * Builds and launches an {@link EvictStaleCachedResponsesJob}. Shared by the nightly scheduled run
+ * and the admin's manual trigger, so there's exactly one place that turns &quot;max age in days&quot; into a
+ * cutoff instant.
+ */
+@Service
+<span class="fc" id="L20">public class EvictStaleCachedResponsesJobFactory {</span>
+
+  @Autowired private CachedResponseRepository cachedResponseRepository;
+  @Autowired private JobService jobService;
+  @Autowired private Clock clock;
+
+  @Value(&quot;${app.cache.eviction.max-age-days:30}&quot;)
+  private int defaultMaxAgeDays;
+
+  /** Launches an eviction run using the configured default max age. */
+  public Job launch() {
+<span class="fc" id="L31">    return launch(defaultMaxAgeDays);</span>
+  }
+
+  /**
+   * Launches an eviction run that deletes every entry not accessed in the last {@code maxAgeDays}
+   * days. Zero is allowed and evicts everything not accessed as of right now.
+   */
+  public Job launch(int maxAgeDays) {
+<span class="fc bfc" id="L39" title="All 2 branches covered.">    if (maxAgeDays &lt; 0) {</span>
+<span class="fc" id="L40">      throw new IllegalArgumentException(&quot;maxAgeDays must be &gt;= 0, was &quot; + maxAgeDays);</span>
+    }
+<span class="fc" id="L42">    Instant cutoff = clock.instant().minus(Duration.ofDays(maxAgeDays));</span>
+    EvictStaleCachedResponsesJob job =
+<span class="fc" id="L44">        EvictStaleCachedResponsesJob.builder()</span>
+<span class="fc" id="L45">            .cachedResponseRepository(cachedResponseRepository)</span>
+<span class="fc" id="L46">            .cutoff(cutoff)</span>
+<span class="fc" id="L47">            .build();</span>
+<span class="fc" id="L48">    return jobService.runAsJob(job);</span>
+  }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.15.202606040825</span></div></body></html>
