@@ -15,6 +15,9 @@ import static org.springframework.test.web.client.response.MockRestResponseCreat
 
 import edu.ucsb.cs156.diningcachingproxy.collections.CachedResponse;
 import edu.ucsb.cs156.diningcachingproxy.collections.CachedResponseRepository;
+import java.time.Clock;
+import java.time.Instant;
+import java.time.ZoneOffset;
 import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -28,6 +31,7 @@ import org.springframework.web.client.RestTemplate;
 public class DiningProxyServiceTests {
 
   private static final String UPSTREAM_HOST = "https://api.ucsb.edu";
+  private static final Instant NOW = Instant.parse("2026-11-15T12:00:00Z");
 
   private CachedResponseRepository cachedResponseRepository;
   private StatsService statsService;
@@ -42,17 +46,23 @@ public class DiningProxyServiceTests {
     restTemplate = new RestTemplate();
     mockServer = MockRestServiceServer.bindTo(restTemplate).build();
     diningProxyService =
-        new DiningProxyService(cachedResponseRepository, statsService, restTemplate, UPSTREAM_HOST);
+        new DiningProxyService(
+            cachedResponseRepository,
+            statsService,
+            restTemplate,
+            UPSTREAM_HOST,
+            Clock.fixed(NOW, ZoneOffset.UTC));
   }
 
   @Test
-  public void cache_hit_returns_cached_response_and_increments_hit_count() {
+  public void cache_hit_returns_cached_response_increments_hit_count_and_updates_last_access() {
     CachedResponse cached =
         CachedResponse.builder()
             .requestPath("/dining/commons/v1/")
             .responseStatus(200)
             .responseBody("[\"cached\"]")
             .hitCount(4)
+            .lastAccessedAt(Instant.parse("2026-10-01T00:00:00Z"))
             .build();
     when(cachedResponseRepository.findByRequestPath("/dining/commons/v1/"))
         .thenReturn(Optional.of(cached));
@@ -72,12 +82,14 @@ public class DiningProxyServiceTests {
                     .responseStatus(200)
                     .responseBody("[\"cached\"]")
                     .hitCount(5)
+                    .lastAccessedAt(NOW)
                     .build()));
     mockServer.verify();
   }
 
   @Test
-  public void cache_miss_forwards_to_upstream_with_headers_and_caches_2xx_response() {
+  public void
+      cache_miss_forwards_to_upstream_with_headers_and_caches_2xx_response_with_timestamp() {
     when(cachedResponseRepository.findByRequestPath("/dining/commons/v1/"))
         .thenReturn(Optional.empty());
 
@@ -103,6 +115,7 @@ public class DiningProxyServiceTests {
                     .responseStatus(200)
                     .responseBody("[\"fresh\"]")
                     .hitCount(1)
+                    .lastAccessedAt(NOW)
                     .build()));
     mockServer.verify();
   }

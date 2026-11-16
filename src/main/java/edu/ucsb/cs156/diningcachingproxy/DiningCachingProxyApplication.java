@@ -1,5 +1,6 @@
 package edu.ucsb.cs156.diningcachingproxy;
 
+import java.time.Clock;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.Bean;
@@ -16,5 +17,11 @@ public class DiningCachingProxyApplication {
   @Bean
   public RestTemplate restTemplate() {
     return new RestTemplate();
+  }
+
+  /** Injected wherever "now" matters (e.g. cache timestamps) so tests can pin the time. */
+  @Bean
+  public Clock clock() {
+    return Clock.systemUTC();
   }
 }
