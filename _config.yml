@@ -20,4 +20,4 @@ repo_name: "TBD"
 repo: ucsb-cs156-f26/proj-dining-caching-proxy-f26-06
 owner: ucsb-cs156-f26
 repo_name: proj-dining-caching-proxy-f26-06
-pull_requests: [{"author":{"id":"U_kgDOC5a6aA","is_bot":false,"login":"DeseraeM","name":""},"headRefName":"dm-Bug-About-link","number":23,"title":"Fix broken About link in Help menu when logged out","url":"https://github.com/ucsb-cs156-f26/proj-dining-caching-proxy-f26-06/pull/23"},{"author":{"id":"U_kgDOCqyyAQ","is_bot":false,"login":"nir-nutman","name":"Nir"},"headRefName":"cache-eviction","number":22,"title":"Add nightly eviction of cached responses not accessed in 30 days","url":"https://github.com/ucsb-cs156-f26/proj-dining-caching-proxy-f26-06/pull/22"}]
+pull_requests: [{"author":{"id":"U_kgDOC5a6aA","is_bot":false,"login":"DeseraeM","name":""},"headRefName":"dm-Bug-About-link","number":23,"title":"Fix broken About link in Help menu when logged out","url":"https://github.com/ucsb-cs156-f26/proj-dining-caching-proxy-f26-06/pull/23"}]
