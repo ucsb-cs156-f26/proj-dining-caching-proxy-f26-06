@@ -2,6 +2,7 @@ package edu.ucsb.cs156.diningcachingproxy.services;
 
 import edu.ucsb.cs156.diningcachingproxy.collections.CachedResponse;
 import edu.ucsb.cs156.diningcachingproxy.collections.CachedResponseRepository;
+import java.time.Clock;
 import java.util.List;
 import java.util.Optional;
 import org.springframework.beans.factory.annotation.Value;
@@ -29,16 +30,19 @@ public class DiningProxyService {
   private final StatsService statsService;
   private final RestTemplate restTemplate;
   private final String upstreamHost;
+  private final Clock clock;
 
   public DiningProxyService(
       CachedResponseRepository cachedResponseRepository,
       StatsService statsService,
       RestTemplate restTemplate,
-      @Value("${app.upstream.host}") String upstreamHost) {
+      @Value("${app.upstream.host}") String upstreamHost,
+      Clock clock) {
     this.cachedResponseRepository = cachedResponseRepository;
     this.statsService = statsService;
     this.restTemplate = restTemplate;
     this.upstreamHost = upstreamHost;
+    this.clock = clock;
   }
 
   public ResponseEntity<String> proxyGet(String requestPath, String apiKey, String apiVersion) {
@@ -47,6 +51,7 @@ public class DiningProxyService {
       statsService.recordHit();
       CachedResponse c = cached.get();
       c.setHitCount(c.getHitCount() + 1);
+      c.setLastAccessedAt(clock.instant());
       cachedResponseRepository.save(c);
       return ResponseEntity.status(c.getResponseStatus())
           .contentType(MediaType.APPLICATION_JSON)
@@ -81,6 +86,7 @@ public class DiningProxyService {
               .responseStatus(upstreamResponse.getStatusCode().value())
               .responseBody(upstreamResponse.getBody())
               .hitCount(1)
+              .lastAccessedAt(clock.instant())
               .build());
     }
 

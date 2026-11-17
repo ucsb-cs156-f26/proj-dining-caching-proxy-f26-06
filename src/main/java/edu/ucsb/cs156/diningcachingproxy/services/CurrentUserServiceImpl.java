@@ -54,7 +54,10 @@ public class CurrentUserServiceImpl extends CurrentUserService {
       return user;
     }
     log.info("getUser: authentication is not OAuth2AuthenticationToken, returning null");
-    log.info("getUser: authentication class is {}", authentication.getClass().getName());
+    // authentication is null (not anonymous) on threads with no request, e.g. @Scheduled tasks
+    log.info(
+        "getUser: authentication class is {}",
+        authentication == null ? null : authentication.getClass().getName());
     return null;
   }
 

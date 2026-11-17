@@ -8,6 +8,8 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import edu.ucsb.cs156.diningcachingproxy.collections.CachedResponseRepository;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -34,6 +36,7 @@ public class DiningProxyIntegrationTests {
   @Autowired private MockMvc mockMvc;
   @Autowired private RestTemplate restTemplate;
   @Autowired private CachedResponseRepository cachedResponseRepository;
+  @Autowired private ObjectMapper mapper;
 
   @Test
   @WithMockUser(roles = "ADMIN")
@@ -82,6 +85,10 @@ public class DiningProxyIntegrationTests {
             .getResponse()
             .getContentAsString();
 
-    assertEquals("[{\"requestPath\":\"/dining/commons/v1/\",\"hitCount\":2}]", endpointsJson);
+    JsonNode endpoints = mapper.readTree(endpointsJson);
+    assertEquals(1, endpoints.size());
+    assertEquals("/dining/commons/v1/", endpoints.get(0).get("requestPath").asText());
+    assertEquals(2, endpoints.get(0).get("hitCount").asLong());
+    assertTrue(endpoints.get(0).hasNonNull("lastAccessedAt"));
   }
 }
