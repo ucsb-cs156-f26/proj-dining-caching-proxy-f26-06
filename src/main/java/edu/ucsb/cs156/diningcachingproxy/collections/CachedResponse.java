@@ -1,5 +1,6 @@
 package edu.ucsb.cs156.diningcachingproxy.collections;
 
+import java.time.Instant;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -31,4 +32,9 @@ public class CachedResponse {
   // Times this request path has been served (1 on first cache, incremented on every
   // subsequent cache hit) — feeds the admin endpoint-inventory view (issue #2).
   private long hitCount;
+
+  // When this entry was last stored or served from the cache. Entries not accessed within the
+  // configured window are deleted by EvictStaleCachedResponsesJob, so the collection doesn't grow
+  // without bound as date-parameterized paths (e.g. /dining/menu/v1/2026-08-23/carrillo) age out.
+  private Instant lastAccessedAt;
 }

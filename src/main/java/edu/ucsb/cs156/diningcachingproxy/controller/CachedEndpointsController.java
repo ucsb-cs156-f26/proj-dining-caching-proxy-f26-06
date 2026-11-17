@@ -2,13 +2,19 @@ package edu.ucsb.cs156.diningcachingproxy.controller;
 
 import edu.ucsb.cs156.diningcachingproxy.collections.CachedResponse;
 import edu.ucsb.cs156.diningcachingproxy.collections.CachedResponseRepository;
+import edu.ucsb.cs156.diningcachingproxy.services.EvictStaleCachedResponsesJobFactory;
+import edu.ucsb.cs156.jobs.entities.Job;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import java.time.Instant;
 import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 /**
@@ -18,13 +24,17 @@ import org.springframework.web.bind.annotation.RestController;
 @Tag(name = "Admin - Cached Endpoints")
 @RequestMapping("/api/admin/endpoints")
 @RestController
-public class CachedEndpointsController {
+public class CachedEndpointsController extends ApiController {
 
   @Autowired private CachedResponseRepository cachedResponseRepository;
+  @Autowired private EvictStaleCachedResponsesJobFactory evictStaleCachedResponsesJobFactory;
 
-  public record CachedEndpointDTO(String requestPath, long hitCount) {
+  public record CachedEndpointDTO(String requestPath, long hitCount, Instant lastAccessedAt) {
     public CachedEndpointDTO(CachedResponse cachedResponse) {
-      this(cachedResponse.getRequestPath(), cachedResponse.getHitCount());
+      this(
+          cachedResponse.getRequestPath(),
+          cachedResponse.getHitCount(),
+          cachedResponse.getLastAccessedAt());
     }
   }
 
@@ -33,5 +43,18 @@ public class CachedEndpointsController {
   @GetMapping("")
   public List<CachedEndpointDTO> allEndpoints() {
     return cachedResponseRepository.findAll().stream().map(CachedEndpointDTO::new).toList();
+  }
+
+  @Operation(
+      summary =
+          "Run cache eviction now: delete cached endpoints not accessed in the last maxAgeDays"
+              + " days (defaults to the same max age the nightly run uses)")
+  @PreAuthorize("hasRole('ROLE_ADMIN')")
+  @PostMapping("/evict")
+  public Job evictStaleEndpoints(
+      @Parameter(name = "maxAgeDays") @RequestParam(required = false) Integer maxAgeDays) {
+    return maxAgeDays == null
+        ? evictStaleCachedResponsesJobFactory.launch()
+        : evictStaleCachedResponsesJobFactory.launch(maxAgeDays);
   }
 }
