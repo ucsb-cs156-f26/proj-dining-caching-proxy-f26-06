@@ -3,6 +3,7 @@ import { hasRole, type CurrentUser } from "main/utils/currentUser";
 import type { SystemInfo } from "main/utils/systemInfo";
 import { Container, Nav, Navbar, NavDropdown } from "react-bootstrap";
 import GoogleLogin from "main/components/Nav/GoogleLogin";
+import HelpMenu from "main/components/Nav/HelpMenu";
 import AppNavbarLocalhost from "main/components/Nav/AppNavbarLocalhost";
 import AppBrand from "main/components/Nav/AppBrand";
 
@@ -72,6 +73,7 @@ export default function AppNavbar({
               )}
             </Nav>
             <Nav className="ml-auto">
+              <HelpMenu />
               <GoogleLogin
                 currentUser={currentUser}
                 handleLogin={handleLogin}
