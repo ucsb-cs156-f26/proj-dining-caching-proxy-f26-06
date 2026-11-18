@@ -18,12 +18,19 @@ public class HostTrackingServiceImpl extends HostTrackingService {
 
   private final Map<String, String> displayNames = new ConcurrentHashMap<>();
   private final Map<String, AtomicLong> requestCounts = new ConcurrentHashMap<>();
+  private final Map<String, Map<String, AtomicLong>> pathCounts = new ConcurrentHashMap<>();
 
   @Override
-  public boolean recordRequest(String remoteAddress) {
+  public boolean recordRequest(String remoteAddress, String requestPath) {
     displayNames.putIfAbsent(remoteAddress, remoteAddress);
     AtomicLong counter = requestCounts.computeIfAbsent(remoteAddress, key -> new AtomicLong(0));
-    return counter.getAndIncrement() == 0;
+    boolean isFirstRequest = counter.getAndIncrement() == 0;
+
+    Map<String, AtomicLong> hostPathCounts =
+        pathCounts.computeIfAbsent(remoteAddress, key -> new ConcurrentHashMap<>());
+    hostPathCounts.computeIfAbsent(requestPath, key -> new AtomicLong(0)).incrementAndGet();
+
+    return isFirstRequest;
   }
 
   @Override
@@ -38,8 +45,16 @@ public class HostTrackingServiceImpl extends HostTrackingService {
             entry ->
                 new HostCount(
                     displayNames.getOrDefault(entry.getKey(), entry.getKey()),
-                    entry.getValue().get()))
+                    entry.getValue().get(),
+                    pathCountsFor(entry.getKey())))
         .sorted(Comparator.comparing(HostCount::host))
+        .toList();
+  }
+
+  private List<PathCount> pathCountsFor(String remoteAddress) {
+    return pathCounts.getOrDefault(remoteAddress, Map.of()).entrySet().stream()
+        .map(entry -> new PathCount(entry.getKey(), entry.getValue().get()))
+        .sorted(Comparator.comparing(PathCount::path))
         .toList();
   }
 }

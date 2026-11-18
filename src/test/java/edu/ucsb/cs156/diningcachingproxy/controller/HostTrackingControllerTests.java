@@ -13,6 +13,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import edu.ucsb.cs156.diningcachingproxy.ControllerTestCase;
 import edu.ucsb.cs156.diningcachingproxy.services.HostCount;
 import edu.ucsb.cs156.diningcachingproxy.services.HostTrackingService;
+import edu.ucsb.cs156.diningcachingproxy.services.PathCount;
 import edu.ucsb.cs156.diningcachingproxy.services.ResolveHostnameJobFactory;
 import edu.ucsb.cs156.jobs.entities.Job;
 import java.util.List;
@@ -43,7 +44,13 @@ public class HostTrackingControllerTests extends ControllerTestCase {
   @Test
   public void admin_can_list_hosts_with_counts() throws Exception {
     List<HostCount> hostCounts =
-        List.of(new HostCount("dining-qa.dokku-00.cs.ucsb.edu", 42), new HostCount("10.0.0.5", 3));
+        List.of(
+            new HostCount(
+                "dining-qa.dokku-00.cs.ucsb.edu",
+                42,
+                List.of(new PathCount("/dining/commons/v1/", 42))),
+            new HostCount(
+                "10.0.0.5", 3, List.of(new PathCount("/dining/menu/v1/2024-08-16/carrillo", 3))));
     when(hostTrackingService.getHostCounts()).thenReturn(hostCounts);
 
     MvcResult response =
