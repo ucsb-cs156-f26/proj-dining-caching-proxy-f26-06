@@ -15,11 +15,11 @@ public abstract class HostTrackingService {
 
   /**
    * Records a single request from the given remote address (the caller's true IP, already resolved
-   * from X-Forwarded-For where applicable).
+   * from X-Forwarded-For where applicable), made to the given request path.
    *
    * @return true if this is the first time this exact address has been seen
    */
-  public abstract boolean recordRequest(String remoteAddress);
+  public abstract boolean recordRequest(String remoteAddress, String requestPath);
 
   /**
    * Updates the display name shown for a previously-seen address - called once a hostname
@@ -28,7 +28,8 @@ public abstract class HostTrackingService {
   public abstract void resolveHostname(String remoteAddress, String hostname);
 
   /**
-   * Every host seen so far with its request count, sorted by host (hostname, or IP if unresolved).
+   * Every host seen so far with its request count (broken down by request path), sorted by host
+   * (hostname, or IP if unresolved).
    */
   public abstract List<HostCount> getHostCounts();
 }

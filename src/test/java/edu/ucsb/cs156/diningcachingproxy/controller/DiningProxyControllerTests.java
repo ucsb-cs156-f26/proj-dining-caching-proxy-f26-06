@@ -114,7 +114,7 @@ public class DiningProxyControllerTests extends ControllerTestCase {
         .perform(get("/dining/commons/v1/").header("X-Forwarded-For", "203.0.113.5, 10.0.0.1"))
         .andExpect(status().isOk());
 
-    verify(hostTrackingService, times(1)).recordRequest("203.0.113.5");
+    verify(hostTrackingService, times(1)).recordRequest("203.0.113.5", "/dining/commons/v1/");
   }
 
   @Test
@@ -125,7 +125,7 @@ public class DiningProxyControllerTests extends ControllerTestCase {
 
     mockMvc.perform(get("/dining/commons/v1/")).andExpect(status().isOk());
 
-    verify(hostTrackingService, times(1)).recordRequest("127.0.0.1");
+    verify(hostTrackingService, times(1)).recordRequest("127.0.0.1", "/dining/commons/v1/");
   }
 
   @Test
@@ -137,14 +137,14 @@ public class DiningProxyControllerTests extends ControllerTestCase {
         .perform(get("/dining/commons/v1/").header("X-Forwarded-For", "   "))
         .andExpect(status().isOk());
 
-    verify(hostTrackingService, times(1)).recordRequest("127.0.0.1");
+    verify(hostTrackingService, times(1)).recordRequest("127.0.0.1", "/dining/commons/v1/");
   }
 
   @Test
   public void launches_a_resolution_job_when_the_address_is_new() throws Exception {
     when(diningProxyService.proxyGet(eq("/dining/commons/v1/"), isNull(), isNull()))
         .thenReturn(ResponseEntity.status(HttpStatus.OK).body("[]"));
-    when(hostTrackingService.recordRequest("203.0.113.5")).thenReturn(true);
+    when(hostTrackingService.recordRequest("203.0.113.5", "/dining/commons/v1/")).thenReturn(true);
 
     mockMvc
         .perform(get("/dining/commons/v1/").header("X-Forwarded-For", "203.0.113.5"))
@@ -158,7 +158,7 @@ public class DiningProxyControllerTests extends ControllerTestCase {
       throws Exception {
     when(diningProxyService.proxyGet(eq("/dining/commons/v1/"), isNull(), isNull()))
         .thenReturn(ResponseEntity.status(HttpStatus.OK).body("[]"));
-    when(hostTrackingService.recordRequest("203.0.113.5")).thenReturn(false);
+    when(hostTrackingService.recordRequest("203.0.113.5", "/dining/commons/v1/")).thenReturn(false);
 
     mockMvc
         .perform(get("/dining/commons/v1/").header("X-Forwarded-For", "203.0.113.5"))
@@ -171,7 +171,8 @@ public class DiningProxyControllerTests extends ControllerTestCase {
   public void tracks_by_the_self_reported_app_name_when_present() throws Exception {
     when(diningProxyService.proxyGet(eq("/dining/commons/v1/"), isNull(), isNull()))
         .thenReturn(ResponseEntity.status(HttpStatus.OK).body("[]"));
-    when(hostTrackingService.recordRequest("dining-qa.dokku-00.cs.ucsb.edu")).thenReturn(true);
+    when(hostTrackingService.recordRequest("dining-qa.dokku-00.cs.ucsb.edu", "/dining/commons/v1/"))
+        .thenReturn(true);
 
     mockMvc
         .perform(
@@ -180,14 +181,16 @@ public class DiningProxyControllerTests extends ControllerTestCase {
                 .header("X-Requesting-App", "dining-qa.dokku-00.cs.ucsb.edu"))
         .andExpect(status().isOk());
 
-    verify(hostTrackingService, times(1)).recordRequest("dining-qa.dokku-00.cs.ucsb.edu");
+    verify(hostTrackingService, times(1))
+        .recordRequest("dining-qa.dokku-00.cs.ucsb.edu", "/dining/commons/v1/");
   }
 
   @Test
   public void does_not_launch_a_resolution_job_for_a_self_reported_app_name() throws Exception {
     when(diningProxyService.proxyGet(eq("/dining/commons/v1/"), isNull(), isNull()))
         .thenReturn(ResponseEntity.status(HttpStatus.OK).body("[]"));
-    when(hostTrackingService.recordRequest("dining-qa.dokku-00.cs.ucsb.edu")).thenReturn(true);
+    when(hostTrackingService.recordRequest("dining-qa.dokku-00.cs.ucsb.edu", "/dining/commons/v1/"))
+        .thenReturn(true);
 
     mockMvc
         .perform(
@@ -211,6 +214,6 @@ public class DiningProxyControllerTests extends ControllerTestCase {
                 .header("X-Requesting-App", "   "))
         .andExpect(status().isOk());
 
-    verify(hostTrackingService, times(1)).recordRequest("203.0.113.5");
+    verify(hostTrackingService, times(1)).recordRequest("203.0.113.5", "/dining/commons/v1/");
   }
 }
