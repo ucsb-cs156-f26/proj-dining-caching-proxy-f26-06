@@ -61,6 +61,81 @@ public class HostTrackingControllerTests extends ControllerTestCase {
   }
 
   @Test
+  public void logged_out_users_cannot_get_path_counts() throws Exception {
+    mockMvc.perform(get("/api/admin/hosts/paths")).andExpect(status().is(403));
+  }
+
+  @WithMockUser(roles = {"USER"})
+  @Test
+  public void logged_in_regular_users_cannot_get_path_counts() throws Exception {
+    mockMvc.perform(get("/api/admin/hosts/paths")).andExpect(status().is(403));
+  }
+
+  @WithMockUser(roles = {"ADMIN"})
+  @Test
+  public void admin_can_get_request_counts_by_host_and_path() throws Exception {
+    List<HostCount> hostCounts =
+        List.of(
+            new HostCount(
+                "dining-qa.dokku-00.cs.ucsb.edu",
+                42,
+                List.of(
+                    new PathCount("/dining/commons/v1/", 40),
+                    new PathCount("/dining/menu/v1/2024-08-16/carrillo", 2))),
+            new HostCount(
+                "10.0.0.5", 3, List.of(new PathCount("/dining/menu/v1/2024-08-16/carrillo", 3))));
+    when(hostTrackingService.getHostCounts()).thenReturn(hostCounts);
+
+    MvcResult response =
+        mockMvc.perform(get("/api/admin/hosts/paths")).andExpect(status().isOk()).andReturn();
+
+    String expectedJson =
+        """
+        {
+          "dining-qa.dokku-00.cs.ucsb.edu": {
+            "/dining/commons/v1/": 40,
+            "/dining/menu/v1/2024-08-16/carrillo": 2
+          },
+          "10.0.0.5": {
+            "/dining/menu/v1/2024-08-16/carrillo": 3
+          }
+        }
+        """;
+    assertEquals(
+        mapper.readTree(expectedJson),
+        mapper.readTree(response.getResponse().getContentAsString()));
+  }
+
+  @WithMockUser(roles = {"ADMIN"})
+  @Test
+  public void path_counts_merge_when_two_addresses_share_a_display_name() throws Exception {
+    List<HostCount> hostCounts =
+        List.of(
+            new HostCount(
+                "same.example.edu", 3, List.of(new PathCount("/a", 2), new PathCount("/b", 1))),
+            new HostCount("same.example.edu", 4, List.of(new PathCount("/a", 4))));
+    when(hostTrackingService.getHostCounts()).thenReturn(hostCounts);
+
+    MvcResult response =
+        mockMvc.perform(get("/api/admin/hosts/paths")).andExpect(status().isOk()).andReturn();
+
+    assertEquals(
+        mapper.readTree("{\"same.example.edu\": {\"/a\": 6, \"/b\": 1}}"),
+        mapper.readTree(response.getResponse().getContentAsString()));
+  }
+
+  @WithMockUser(roles = {"ADMIN"})
+  @Test
+  public void path_counts_is_an_empty_object_when_no_hosts_have_been_seen() throws Exception {
+    when(hostTrackingService.getHostCounts()).thenReturn(List.of());
+
+    MvcResult response =
+        mockMvc.perform(get("/api/admin/hosts/paths")).andExpect(status().isOk()).andReturn();
+
+    assertEquals("{}", response.getResponse().getContentAsString());
+  }
+
+  @Test
   public void logged_out_users_cannot_retry_resolution() throws Exception {
     mockMvc
         .perform(post("/api/admin/hosts/resolve?ip=10.0.0.5").with(csrf()))
