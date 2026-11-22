@@ -79,6 +79,21 @@ describe("AppNavbar tests", () => {
     expect(screen.getByText("Log In")).toBeInTheDocument();
     expect(screen.queryByText("Log Out")).not.toBeInTheDocument();
   });
+  test("renders the Help menu when not logged in", () => {
+    renderNavbar(
+      currentUserFixtures.notLoggedIn,
+      systemInfoFixtures.showingNeither,
+    );
+    expect(screen.getByTestId("appnavbar-help-dropdown")).toBeInTheDocument();
+  });
+
+  test("renders the Help menu when logged in", () => {
+    renderNavbar(
+      currentUserFixtures.userOnly,
+      systemInfoFixtures.showingNeither,
+    );
+    expect(screen.getByTestId("appnavbar-help-dropdown")).toBeInTheDocument();
+  });
 
   test("renders user email and Log Out button when logged in", () => {
     renderNavbar(
