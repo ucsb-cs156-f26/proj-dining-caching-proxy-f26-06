@@ -13,63 +13,74 @@ You will also need the command:
 
 * <tt>dokku git:set <i>appname</i> keep-git-dir true</tt>
 
+## App names must match exactly
+
+The prod and qa apps **must** be named `dining-caching-proxy` and
+`dining-caching-proxy-qa` (with hyphens). The `48-tag-docker-image-main`
+workflow derives these names from the repo name
+(`proj-dining-caching-proxy-f26-NN` → `dining-caching-proxy` on `dokku-NN`)
+and fails with `App dining-caching-proxy does not exist` if they are named
+anything else (e.g. `diningcachingproxy`). The qa app also needs
+`IS_TEMPLATE_APP=true`, since it is the template for PR review apps.
+
 # Short Version
 
 This short version omits many details, but if you are already familiar with the process of deploying applications, you may be able to use this.
 
 Note that you may need to modify:
-* `diningcachingproxy` to `diningcachingproxy-qa` or `diningcachingproxy-dev-cgaucho` (where `cgaucho` is your github id)
+* `dining-caching-proxy` to `dining-caching-proxy-qa` or `dining-caching-proxy-dev-cgaucho` (where `cgaucho` is your github id)
 * `https://github.com/ucsb-cs156/proj-dining-caching-proxy` to your team's repo url, if different
 * `main` to `my-branch-name` for your feature branch
 * `yourEmail@ucsb.edu` to your own email
 * values for `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET` from [docs/oauth.md](oauth.md)
 
-### setup `diningcachingproxy`
+### setup `dining-caching-proxy`
 
 ```
-dokku apps:create diningcachingproxy
-dokku git:set diningcachingproxy keep-git-dir true
+dokku apps:create dining-caching-proxy
+dokku git:set dining-caching-proxy keep-git-dir true
 
-dokku postgres:create diningcachingproxy-db
-dokku postgres:link diningcachingproxy-db diningcachingproxy --no-restart
+dokku postgres:create dining-caching-proxy-db
+dokku postgres:link dining-caching-proxy-db dining-caching-proxy --no-restart
 
-dokku mongo:create diningcachingproxy-m-db
-dokku mongo:link diningcachingproxy-m-db diningcachingproxy --no-restart
+dokku mongo:create dining-caching-proxy-m-db
+dokku mongo:link dining-caching-proxy-m-db dining-caching-proxy --no-restart
 
-dokku config:set --no-restart diningcachingproxy PRODUCTION=true
-dokku config:set --no-restart diningcachingproxy SOURCE_REPO=https://github.com/ucsb-cs156/proj-dining-caching-proxy
-dokku config:set --no-restart diningcachingproxy GOOGLE_CLIENT_ID=get-value-from-google-developer-console
-dokku config:set --no-restart diningcachingproxy GOOGLE_CLIENT_SECRET=get-value-from-google-developer-console
-dokku config:set --no-restart diningcachingproxy ADMIN_EMAILS=list-of-admin-emails
+dokku config:set --no-restart dining-caching-proxy PRODUCTION=true
+dokku config:set --no-restart dining-caching-proxy SOURCE_REPO=https://github.com/ucsb-cs156/proj-dining-caching-proxy
+dokku config:set --no-restart dining-caching-proxy GOOGLE_CLIENT_ID=get-value-from-google-developer-console
+dokku config:set --no-restart dining-caching-proxy GOOGLE_CLIENT_SECRET=get-value-from-google-developer-console
+dokku config:set --no-restart dining-caching-proxy ADMIN_EMAILS=list-of-admin-emails
 
-dokku git:sync diningcachingproxy https://github.com/ucsb-cs156/proj-dining-caching-proxy main
-dokku ps:rebuild diningcachingproxy
+dokku git:sync dining-caching-proxy https://github.com/ucsb-cs156/proj-dining-caching-proxy main
+dokku ps:rebuild dining-caching-proxy
 
-dokku letsencrypt:set diningcachingproxy email yourEmail@ucsb.edu
-dokku letsencrypt:enable diningcachingproxy
+dokku letsencrypt:set dining-caching-proxy email yourEmail@ucsb.edu
+dokku letsencrypt:enable dining-caching-proxy
 ```
 
-### setup `diningcachingproxy-qa`
+### setup `dining-caching-proxy-qa`
 
 ```
-dokku apps:create diningcachingproxy-qa
-dokku git:set diningcachingproxy-qa keep-git-dir true
+dokku apps:create dining-caching-proxy-qa
+dokku git:set dining-caching-proxy-qa keep-git-dir true
 
-dokku postgres:create diningcachingproxy-qa-db
-dokku postgres:link diningcachingproxy-qa-db diningcachingproxy-qa --no-restart
+dokku postgres:create dining-caching-proxy-qa-db
+dokku postgres:link dining-caching-proxy-qa-db dining-caching-proxy-qa --no-restart
 
-dokku mongo:create diningcachingproxy-qa-m-db
-dokku mongo:link diningcachingproxy-qa-m-db diningcachingproxy-qa --no-restart
+dokku mongo:create dining-caching-proxy-qa-m-db
+dokku mongo:link dining-caching-proxy-qa-m-db dining-caching-proxy-qa --no-restart
 
-dokku config:set --no-restart diningcachingproxy-qa PRODUCTION=true
-dokku config:set --no-restart diningcachingproxy-qa SOURCE_REPO=https://github.com/ucsb-cs156/proj-dining-caching-proxy
-dokku config:set --no-restart diningcachingproxy-qa GOOGLE_CLIENT_ID=get-value-from-google-developer-console
-dokku config:set --no-restart diningcachingproxy-qa GOOGLE_CLIENT_SECRET=get-value-from-google-developer-console
-dokku config:set --no-restart diningcachingproxy-qa ADMIN_EMAILS=list-of-admin-emails
+dokku config:set --no-restart dining-caching-proxy-qa PRODUCTION=true
+dokku config:set --no-restart dining-caching-proxy-qa SOURCE_REPO=https://github.com/ucsb-cs156/proj-dining-caching-proxy
+dokku config:set --no-restart dining-caching-proxy-qa GOOGLE_CLIENT_ID=get-value-from-google-developer-console
+dokku config:set --no-restart dining-caching-proxy-qa GOOGLE_CLIENT_SECRET=get-value-from-google-developer-console
+dokku config:set --no-restart dining-caching-proxy-qa ADMIN_EMAILS=list-of-admin-emails
+dokku config:set --no-restart dining-caching-proxy-qa IS_TEMPLATE_APP=true
 
-dokku git:sync diningcachingproxy-qa https://github.com/ucsb-cs156/proj-dining-caching-proxy main
-dokku ps:rebuild diningcachingproxy-qa
+dokku git:sync dining-caching-proxy-qa https://github.com/ucsb-cs156/proj-dining-caching-proxy main
+dokku ps:rebuild dining-caching-proxy-qa
 
-dokku letsencrypt:set diningcachingproxy-qa email yourEmail@ucsb.edu
-dokku letsencrypt:enable diningcachingproxy-qa
+dokku letsencrypt:set dining-caching-proxy-qa email yourEmail@ucsb.edu
+dokku letsencrypt:enable dining-caching-proxy-qa
 ```
