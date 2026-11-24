@@ -16,7 +16,7 @@ On dokku, you set up the MongoDB database in a similar way to how the Postgres
 database is set up, with these commands.
 
 Note that `appname` should be replaced with the name of your app, e.g.
-`diningcachingproxy`, `diningcachingproxy-qa`, `diningcachingproxy-dev-cgaucho`, etc.
+`dining-caching-proxy`, `dining-caching-proxy-qa`, `dining-caching-proxy-dev-cgaucho`, etc.
 
 Append `-m-db` to distinguish this from the app itself.
 
@@ -25,11 +25,11 @@ dokku mongo:create appname-m-db
 dokku mongo:link appname-m-db appname --no-restart
 ```
 
-For example, for a `diningcachingproxy-qa` app, you'd use:
+For example, for a `dining-caching-proxy-qa` app, you'd use:
 
 ```
-dokku mongo:create diningcachingproxy-qa-m-db
-dokku mongo:link diningcachingproxy-qa-m-db diningcachingproxy-qa --no-restart
+dokku mongo:create dining-caching-proxy-qa-m-db
+dokku mongo:link dining-caching-proxy-qa-m-db dining-caching-proxy-qa --no-restart
 ```
 
 The `dokku mongo:link` command sets the `MONGO_URL` config var on the app,
@@ -40,10 +40,10 @@ which is read by `spring.data.mongodb.uri` in
 
 If you want to list records in the mongo collections, you can access a mongo
 command line on dokku with the following command (substitute the name of your
-mongo db database in place of `diningcachingproxy-m-db`):
+mongo db database in place of `dining-caching-proxy-m-db`):
 
 ```
-dokku mongo:connect diningcachingproxy-m-db
+dokku mongo:connect dining-caching-proxy-m-db
 ```
 
 That gives you a `mongosh` prompt where `show collections` lists the
