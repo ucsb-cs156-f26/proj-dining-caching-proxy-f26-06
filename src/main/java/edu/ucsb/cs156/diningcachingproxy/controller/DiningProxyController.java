@@ -39,12 +39,13 @@ public class DiningProxyController {
     // can't distinguish one calling app from another and never resolves via reverse DNS anyway.
     String identifier =
         (requestingApp != null && !requestingApp.isBlank()) ? requestingApp : clientAddress;
-    boolean isNewAddress = hostTrackingService.recordRequest(identifier);
+    String requestUri = request.getRequestURI();
+    boolean isNewAddress = hostTrackingService.recordRequest(identifier, requestUri);
     if (isNewAddress && identifier.equals(clientAddress)) {
       resolveHostnameJobFactory.launch(clientAddress);
     }
 
-    String requestPath = request.getRequestURI();
+    String requestPath = requestUri;
     String queryString = request.getQueryString();
     if (queryString != null) {
       requestPath = requestPath + "?" + queryString;
