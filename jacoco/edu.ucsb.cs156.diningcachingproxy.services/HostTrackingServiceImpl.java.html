@@ -18,29 +18,44 @@ import org.springframework.stereotype.Service;
 
 <span class="fc" id="L19">  private final Map&lt;String, String&gt; displayNames = new ConcurrentHashMap&lt;&gt;();</span>
 <span class="fc" id="L20">  private final Map&lt;String, AtomicLong&gt; requestCounts = new ConcurrentHashMap&lt;&gt;();</span>
+<span class="fc" id="L21">  private final Map&lt;String, Map&lt;String, AtomicLong&gt;&gt; pathCounts = new ConcurrentHashMap&lt;&gt;();</span>
 
   @Override
-  public boolean recordRequest(String remoteAddress) {
-<span class="fc" id="L24">    displayNames.putIfAbsent(remoteAddress, remoteAddress);</span>
-<span class="fc" id="L25">    AtomicLong counter = requestCounts.computeIfAbsent(remoteAddress, key -&gt; new AtomicLong(0));</span>
-<span class="fc bfc" id="L26" title="All 2 branches covered.">    return counter.getAndIncrement() == 0;</span>
+  public boolean recordRequest(String remoteAddress, String requestPath) {
+<span class="fc" id="L25">    displayNames.putIfAbsent(remoteAddress, remoteAddress);</span>
+<span class="fc" id="L26">    AtomicLong counter = requestCounts.computeIfAbsent(remoteAddress, key -&gt; new AtomicLong(0));</span>
+<span class="fc bfc" id="L27" title="All 2 branches covered.">    boolean isFirstRequest = counter.getAndIncrement() == 0;</span>
+
+<span class="fc" id="L29">    Map&lt;String, AtomicLong&gt; hostPathCounts =</span>
+<span class="fc" id="L30">        pathCounts.computeIfAbsent(remoteAddress, key -&gt; new ConcurrentHashMap&lt;&gt;());</span>
+<span class="fc" id="L31">    hostPathCounts.computeIfAbsent(requestPath, key -&gt; new AtomicLong(0)).incrementAndGet();</span>
+
+<span class="fc" id="L33">    return isFirstRequest;</span>
   }
 
   @Override
   public void resolveHostname(String remoteAddress, String hostname) {
-<span class="fc" id="L31">    displayNames.put(remoteAddress, hostname);</span>
-<span class="fc" id="L32">  }</span>
+<span class="fc" id="L38">    displayNames.put(remoteAddress, hostname);</span>
+<span class="fc" id="L39">  }</span>
 
   @Override
   public List&lt;HostCount&gt; getHostCounts() {
-<span class="fc" id="L36">    return requestCounts.entrySet().stream()</span>
-<span class="fc" id="L37">        .map(</span>
+<span class="fc" id="L43">    return requestCounts.entrySet().stream()</span>
+<span class="fc" id="L44">        .map(</span>
             entry -&gt;
-<span class="fc" id="L39">                new HostCount(</span>
-<span class="fc" id="L40">                    displayNames.getOrDefault(entry.getKey(), entry.getKey()),</span>
-<span class="fc" id="L41">                    entry.getValue().get()))</span>
-<span class="fc" id="L42">        .sorted(Comparator.comparing(HostCount::host))</span>
-<span class="fc" id="L43">        .toList();</span>
+<span class="fc" id="L46">                new HostCount(</span>
+<span class="fc" id="L47">                    displayNames.getOrDefault(entry.getKey(), entry.getKey()),</span>
+<span class="fc" id="L48">                    entry.getValue().get(),</span>
+<span class="fc" id="L49">                    pathCountsFor(entry.getKey())))</span>
+<span class="fc" id="L50">        .sorted(Comparator.comparing(HostCount::host))</span>
+<span class="fc" id="L51">        .toList();</span>
+  }
+
+  private List&lt;PathCount&gt; pathCountsFor(String remoteAddress) {
+<span class="fc" id="L55">    return pathCounts.getOrDefault(remoteAddress, Map.of()).entrySet().stream()</span>
+<span class="fc" id="L56">        .map(entry -&gt; new PathCount(entry.getKey(), entry.getValue().get()))</span>
+<span class="fc" id="L57">        .sorted(Comparator.comparing(PathCount::path))</span>
+<span class="fc" id="L58">        .toList();</span>
   }
 }
 </pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.15.202606040825</span></div></body></html>

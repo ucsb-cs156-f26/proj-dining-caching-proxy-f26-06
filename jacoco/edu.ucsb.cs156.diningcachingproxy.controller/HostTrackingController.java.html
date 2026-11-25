@@ -2,12 +2,15 @@
 
 import edu.ucsb.cs156.diningcachingproxy.services.HostCount;
 import edu.ucsb.cs156.diningcachingproxy.services.HostTrackingService;
+import edu.ucsb.cs156.diningcachingproxy.services.PathCount;
 import edu.ucsb.cs156.diningcachingproxy.services.ResolveHostnameJobFactory;
 import edu.ucsb.cs156.jobs.entities.Job;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -20,7 +23,7 @@ import org.springframework.web.bind.annotation.RestController;
 @Tag(name = &quot;Admin - Requesting Hosts&quot;)
 @RequestMapping(&quot;/api/admin/hosts&quot;)
 @RestController
-<span class="fc" id="L23">public class HostTrackingController {</span>
+<span class="fc" id="L26">public class HostTrackingController {</span>
 
   @Autowired private HostTrackingService hostTrackingService;
   @Autowired private ResolveHostnameJobFactory resolveHostnameJobFactory;
@@ -29,14 +32,34 @@ import org.springframework.web.bind.annotation.RestController;
   @PreAuthorize(&quot;hasRole('ROLE_ADMIN')&quot;)
   @GetMapping(&quot;&quot;)
   public List&lt;HostCount&gt; allHosts() {
-<span class="fc" id="L32">    return hostTrackingService.getHostCounts();</span>
+<span class="fc" id="L35">    return hostTrackingService.getHostCounts();</span>
+  }
+
+  @Operation(
+      summary = &quot;Request counts for each host, broken down by request path&quot;,
+      description =
+          &quot;Returns a JSON object keyed by host (hostname if resolved, else IP address). Each value&quot;
+              + &quot; is an object mapping a request path to how many times that host has requested&quot;
+              + &quot; it.&quot;)
+  @PreAuthorize(&quot;hasRole('ROLE_ADMIN')&quot;)
+  @GetMapping(&quot;/paths&quot;)
+  public Map&lt;String, Map&lt;String, Long&gt;&gt; requestCountsByHostAndPath() {
+<span class="fc" id="L47">    Map&lt;String, Map&lt;String, Long&gt;&gt; result = new LinkedHashMap&lt;&gt;();</span>
+<span class="fc bfc" id="L48" title="All 2 branches covered.">    for (HostCount hostCount : hostTrackingService.getHostCounts()) {</span>
+<span class="fc" id="L49">      Map&lt;String, Long&gt; paths =</span>
+<span class="fc" id="L50">          result.computeIfAbsent(hostCount.host(), host -&gt; new LinkedHashMap&lt;&gt;());</span>
+<span class="fc bfc" id="L51" title="All 2 branches covered.">      for (PathCount pathCount : hostCount.pathCounts()) {</span>
+<span class="fc" id="L52">        paths.merge(pathCount.path(), pathCount.count(), Long::sum);</span>
+<span class="fc" id="L53">      }</span>
+<span class="fc" id="L54">    }</span>
+<span class="fc" id="L55">    return result;</span>
   }
 
   @Operation(summary = &quot;Retry hostname resolution for one IP address&quot;)
   @PreAuthorize(&quot;hasRole('ROLE_ADMIN')&quot;)
   @PostMapping(&quot;/resolve&quot;)
   public Job resolveHostname(@Parameter(name = &quot;ip&quot;) @RequestParam String ip) {
-<span class="fc" id="L39">    return resolveHostnameJobFactory.launch(ip);</span>
+<span class="fc" id="L62">    return resolveHostnameJobFactory.launch(ip);</span>
   }
 }
 </pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.15.202606040825</span></div></body></html>
